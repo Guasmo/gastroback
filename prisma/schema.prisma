@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String?  @unique
+  password  String?
+  role      String   @default("CUSTOMER") // ADMIN, KITCHEN, CASHIER, CUSTOMER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  imageUrl    String?
+  isAvailable Boolean     @default(true)
+  categoryId  Int?
+  category    Category?   @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+  recipes     Recipe[]
+}
+
+model InventoryItem {
+  id           Int      @id @default(autoincrement())
+  name         String
+  unit         String   // e.g., kg, liters, units
+  quantity     Float    @default(0)
+  minimumStock Float    @default(0)
+  extraPrice   Float    @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  recipes      Recipe[]
+}
+
+model Order {
+  id            Int           @id @default(autoincrement())
+  customerName  String
+  userId        Int?
+  user          User?         @relation(fields: [userId], references: [id])
+  status        String        @default("PENDING") // PENDING, PREPARING, READY, DELIVERED, CANCELLED
+  paymentStatus String        @default("UNPAID") // UNPAID, PAID
+  paymentMethod String?       // EFECTIVO, TRANSFERENCIA
+  receiptUrl    String?       // URL del comprobante de pago
+  observations  String?       // Alergias, peticiones especiales, etc.
+  total         Float
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  items         OrderItem[]
+}
+
+model OrderItem {
+  id          Int      @id @default(autoincrement())
+  orderId     Int
+  order       Order    @relation(fields: [orderId], references: [id])
+  productId   Int
+  product     Product  @relation(fields: [productId], references: [id])
+  quantity    Int
+  priceAtTime Float
+  notes       String?
+}
+
+model Recipe {
+  id              Int           @id @default(autoincrement())
+  productId       Int
+  product         Product       @relation(fields: [productId], references: [id])
+  inventoryItemId Int
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  quantity        Float
+  extraPrice      Float         @default(0) // precio extra si el cliente pide mas de este ingrediente
+}

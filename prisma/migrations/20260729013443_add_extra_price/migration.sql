@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Recipe" ADD COLUMN     "extraPrice" DOUBLE PRECISION NOT NULL DEFAULT 0;
