@@ -16,7 +16,7 @@ export class SseService {
       const poll = async () => {
         try {
           const orders = await this.prisma.order.findMany({
-            where: { status: { in: ['PENDING', 'PREPARING'] } },
+            where: { status: { in: ['PENDING', 'PREPARING', 'READY'] } },
             include: { items: { include: { product: true } } },
             orderBy: { createdAt: 'asc' },
           });
