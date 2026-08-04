@@ -1,38 +1,32 @@
 import { NestFactory } from '@nestjs/core';
-import { ExpressAdapter } from '@nestjs/platform-express';
 import { AppModule } from '../src/app.module';
-import express from 'express';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { INestApplication } from '@nestjs/common';
 
-const expressApp = express();
-let nestApp: INestApplication | null = null;
-let initialized = false;
+let app: INestApplication;
 
 async function bootstrap() {
-  if (!initialized) {
-    initialized = true;
-    nestApp = await NestFactory.create(
-      AppModule,
-      new ExpressAdapter(expressApp),
-      { logger: ['error', 'warn'] },
-    );
-    nestApp.enableCors({
+  if (!app) {
+    app = await NestFactory.create(AppModule, {
+      logger: ['error', 'warn'],
+    });
+    app.enableCors({
       origin: '*',
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
       allowedHeaders: 'Content-Type, Authorization',
       credentials: true,
     });
     try {
-      await nestApp.init();
-    } catch (err) {
-      console.error('[Vercel] nestApp.init() error (non-fatal):', err);
+      await app.init();
+    } catch (err: any) {
+      console.error('[Vercel] init error:', err?.message ?? err);
     }
   }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   await bootstrap();
-  expressApp(req as any, res as any);
+  const httpAdapter = app.getHttpAdapter();
+  httpAdapter.getInstance()(req as any, res as any);
 }
 
