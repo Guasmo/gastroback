@@ -7,9 +7,11 @@ import type { INestApplication } from '@nestjs/common';
 
 const expressApp = express();
 let nestApp: INestApplication | null = null;
+let initialized = false;
 
 async function bootstrap() {
-  if (!nestApp) {
+  if (!initialized) {
+    initialized = true;
     nestApp = await NestFactory.create(
       AppModule,
       new ExpressAdapter(expressApp),
@@ -21,7 +23,11 @@ async function bootstrap() {
       allowedHeaders: 'Content-Type, Authorization',
       credentials: true,
     });
-    await nestApp.init();
+    try {
+      await nestApp.init();
+    } catch (err) {
+      console.error('[Vercel] nestApp.init() error (non-fatal):', err);
+    }
   }
 }
 
