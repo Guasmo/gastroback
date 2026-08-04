@@ -1,0 +1,2 @@
+ignoredBuilds:
+  - "!esbuild"
